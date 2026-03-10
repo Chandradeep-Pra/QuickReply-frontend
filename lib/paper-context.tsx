@@ -5,17 +5,11 @@ import {
   useContext,
   useState,
   useCallback,
-  useEffect,
   type ReactNode,
 } from "react";
 
 import type { Paper } from "./types";
-import {
-  fetchPapers,
-  createPaperApi,
-  updatePaperApi,
-  deletePaperApi,
-} from "@/hooks/usePapers";
+import { mockPapers } from "./mock-data";
 
 interface PaperContextValue {
   papers: Paper[];
@@ -27,34 +21,29 @@ interface PaperContextValue {
 const PaperContext = createContext<PaperContextValue | undefined>(undefined);
 
 export function PaperProvider({ children }: { children: ReactNode }) {
-  const [papers, setPapers] = useState<Paper[]>([]);
-
-  // Load papers from backend
-  useEffect(() => {
-    async function load() {
-      const data = await fetchPapers();
-      setPapers(data);
-    }
-    load();
-  }, []);
+  
+  // Initialize directly from mock data
+  const [papers, setPapers] = useState<Paper[]>(mockPapers);
 
   // ADD
   const addPaper = useCallback(async (paper: Omit<Paper, "id">) => {
-    const newPaper = await createPaperApi(paper);
+    const newPaper: Paper = {
+      ...paper,
+      id: crypto.randomUUID(),
+    };
+
     setPapers((prev) => [...prev, newPaper]);
   }, []);
 
   // EDIT
   const editPaper = useCallback(async (id: string, updated: Partial<Paper>) => {
-    const newData = await updatePaperApi(id, updated);
     setPapers((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...newData } : p))
+      prev.map((p) => (p.id === id ? { ...p, ...updated } : p))
     );
   }, []);
 
   // DELETE
   const removePaper = useCallback(async (id: string) => {
-    await deletePaperApi(id);
     setPapers((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
